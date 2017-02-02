@@ -1,0 +1,19 @@
+{
+  "name": "zine",
+  "version": "1.0",
+  "description": "A simple pub/sub system and higher order React component, for building reactive interfaces",
+  "main": "index.js",
+  "files": [
+    "index.js",
+    "Publisher.js"
+  ],
+  "peerDependencies": {
+    "react": "*"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/j-s-n/zine.git"
+  },
+  "author": "J. S. Nelson",
+  "license": "MIT"
+}
