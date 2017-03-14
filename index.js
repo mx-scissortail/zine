@@ -1,64 +1,103 @@
 import React from 'react';
 import {subscribe, unsubscribe, publish, publishable} from './Publisher';
 
-const SubscriberMethods = {
+const sharedMethods = {
   componentWillMount: function () {
-    this.unsubscribe = {};
-    this.register({}, this.props);
-  },
-
-  componentWillReceiveProps: function (nextProps) {
-    this.register(this.props, nextProps);
+    this._zine.canUpdate = true;
+    if (publishable(this._zine.subscription)) {
+      subscribe(this._zine.subscription, this.update);
+    } // TODO: add a warning here?
   },
 
   componentWillUnmount: function () {
-    for (var index in this.subscriptionProps) {
-      var prop = this.props[this.subscriptionProps[index]];
-      if (prop) {
-        unsubscribe(prop, this.update);
-      }
+    this._zine.canUpdate = false; // prevent updates from triggering re-renders after component decides to unmount
+    unsubscribe(this._zine.subscription, this.update);
+  },
+
+  update: function (value) {
+    // value is almost always undefined here, but can be because of how zine.publish uses it as an optional second argument
+    if (this._zine.canUpdate) {
+      this.setState({props: this._zine.transform(this._zine.subscription, value)});
     }
   },
 
-  register: function (props, nextProps) {
-    for (var index in this.subscriptionProps) {
-      var key = this.subscriptionProps[index];
-      var oldProp = props[key];
-      var newProp = nextProps[key];
-      if (oldProp != newProp) {
-        if (oldProp) {
-          unsubscribe(oldProp, this.update);
-        }
-        if (newProp) {
-          subscribe(newProp, this.update);
-        }
-      }
-    }
-  },
-
-  update: function () {
-    this.setState({});  // forceUpdate might work here, but I suspect there are weird race conditions
+  render: function () {
+    return React.createElement(this._zine.component, Object.assign({}, this.props, this.state.props));
   }
 };
 
-/*
-  A higher order component wrapper
-  Takes a child component and creates a wrapper component that just passes all props down to the child
-  If any of the props passed to the wrapper are Observables, the wrapper maintains a subscription to them and re-renders whenever they update
-*/
-export function createSubscriber (props, component) {
-  return React.createClass(Object.assign({
-    subscriptionProps: typeof props == 'string' ? [props] : props,
+const staticSubscriberMethods = {
+  getInitialState: function () {
+    this._zine.subscription = this._zine.subscriptionSpec;
+    return {props: this._zine.transform(this._zine.subscription)};
+  }
+};
 
-    displayName: `Subscriber[${props.toString()}]`,
+const dynamicSubscriberMethods = {
+  getInitialState: function () {
+    this._zine.subscription = this.props[this._zine.subscriptionSpec];
+    return {props: this._zine.transform(this._zine.subscription)};
+  },
 
-    render: function () {
-      // TODO: verify that this works with children
-      return React.createElement(component, this.props, this.props.children);
+  componentWillReceiveProps: function (nextProps) {
+    var oldSubscription = this.props[this._zine.subscriptionSpec];
+    var subscription = this._zine.subscription = nextProps[this._zine.subscriptionSpec];
+    if (subscription != oldSubscription) {
+      unsubscribe(oldSubscription, this.update);
+      if (publishable(subscription)) {
+        subscribe(subscription, this.update);
+      } // TODO: add a warning here?
     }
-  }, SubscriberMethods));
+    this.setState({props: this._zine.transform(subscription)});
+  }
+};
+
+const typeToMethodMap = {
+  'string': dynamicSubscriberMethods,
+  'object': staticSubscriberMethods,
+  'function': staticSubscriberMethods
+};
+
+function pass (sub) { // default transform just merges the subscribed object into props
+  return sub;
+}
+
+export function connector (subscriptionSpec, transform = pass) {
+  var specType = (subscriptionSpec === null) ? 'null' : typeof subscriptionSpec;
+  var methods = typeToMethodMap[specType];
+  if (!methods) {
+    throw new Error(`connector(subscriptionSpec, transform): subscriptionSpec must be a string, object or function, got ${specType}`);
+  }
+  if (typeof transform !== 'function') {
+    throw new Error(`connector(subscriptionSpec, transform): transform must be a function, got ${typeof transform}`);
+  }
+
+  return function (component) {
+    return React.createClass(Object.assign({}, sharedMethods, methods, {
+        displayName: 'Subscriber',
+        _zine: {
+          component,
+          subscriptionSpec,
+          transform
+        }
+      }));
+  };
+};
+
+export function propConnector (prop, transform = pass) {
+  if (typeof prop !== 'string') {
+    throw new Error(`propConnector(prop, transform): prop name must be a string, got ${typeof prop}`);
+  }
+  if (typeof transform !== 'function') {
+    throw new Error(`connector(subscriptionSpec, transform): transform must be a function, got ${typeof transform}`);
+  }
+  return connector(prop, (sub, val) => ({[prop]: transform(sub, val)}));
+};
+
+export function createSubscriber (propSpec, component) {
+  return (Array.isArray(propSpec) ? propSpec : [propSpec]).reduce((comp, prop) => propConnector(prop)(comp), component);
 };
 
 export * from './Publisher';
 
-export default {subscribe, unsubscribe, publish, publishable, createSubscriber};
+export default {subscribe, unsubscribe, publish, publishable, connector, propConnector, createSubscriber};

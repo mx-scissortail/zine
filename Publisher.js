@@ -6,7 +6,7 @@ const referenceTypes = {
 
 export function publishable (subject) {
   return subject !== null && referenceTypes.hasOwnProperty(typeof subject);
-}
+};
 
 export function subscribe (subject, subscription) {
   var subscriptions = allSubscriptions.get(subject);
@@ -14,7 +14,12 @@ export function subscribe (subject, subscription) {
   if (subscriptions) {
     subscriptions.push(subscription);
   } else {
-    allSubscriptions.set(subject, [subscription]);
+    var subjectType = (subject === null) ? 'null' : typeof subject;
+    if (referenceTypes.hasOwnProperty(subjectType)) {
+      allSubscriptions.set(subject, [subscription]);
+    } else {
+      throw new Error(`subscribe(subject, subscription): subject must be an object or function, got ${subjectType}`);
+    }
   }
 
   return subscription;
