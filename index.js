@@ -28,6 +28,7 @@ const sharedMethods = {
 
 const staticSubscriberMethods = {
   getInitialState: function () {
+    this._zine = Object.assign({}, this._zine);
     this._zine.subscription = this._zine.subscriptionSpec;
     return {props: this._zine.transform(this._zine.subscription)};
   }
@@ -35,6 +36,7 @@ const staticSubscriberMethods = {
 
 const dynamicSubscriberMethods = {
   getInitialState: function () {
+    this._zine = Object.assign({}, this._zine);
     this._zine.subscription = this.props[this._zine.subscriptionSpec];
     return {props: this._zine.transform(this._zine.subscription)};
   },
