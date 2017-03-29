@@ -51,25 +51,24 @@ And then rendering `<ReactiveFoo />` will subscribe to `globalStoreInstance` and
 ## Installation
 
 ```
-npm install zine
+npm install zine --save
 ```
 
 ## Importing
 
-You can You can import `zine` as a module
+zine is written in ES6 and transpiled to ES5 for compatibility. Both versions are included in the npm package. If you're using ES5, do this:
 ```
-import zine from 'zine';
+var zine = require('zine');
 ```
-...and call methods on it, e.g. `zine.publish(foo)`. Or you can also individually import any of its methods, i.e.
+If you're using ES6+, you can include the original sources by importing the module like this:
 ```
-import {connector, propConnector, createSubscriber, publish, publishable, subscribe, unsubscribe} from 'zine';
+import zine from 'zine/es6';
 ```
-...and use them on their own, e.g. `subscribe(foo)`.
-
-If you don't want `createSubscriber`, and thus the React dependency, you can import the pub/sub methods independently, e.g.
+...or importing the methods it exports individually, e.g.
 ```
-import {publish, publishable, subscribe, unsubscribe} from 'zine/Publisher';
+import {connector, propConnector, createSubscriber, publish, publishable, subscribe, unsubscribe} from 'zine/es6';
 ```
+Importing the ES5 source from ES6 should work fine too, but will likely add a tiny amount of overhead if you're transpiling anyway.
 
 ## API
 
@@ -186,11 +185,11 @@ Internally, zine uses a `WeakMap` to track subscriptions, so it won't leak refer
 
 Removes all instances of `subscription` from the list of callbacks associated with `subject`. See the documentation for `publish` for a small caveat about the result of calling `unsubscribe` during a call to `publish`.
 
-## New in version 1.1
+## New in version 2.0
 
-* Added `connector` and `propsConnector` for much more general subscription components
-* Better error messages for bad arguments throughout
-* Fixed a race condition involving publishing while a subscriber component was unmounting
+* Fixed ES5/6 require/import shenanigans
+* Removed separate `Publisher` export
+* Added test suite
 
 ## License
 
