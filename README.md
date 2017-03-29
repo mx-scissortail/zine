@@ -64,7 +64,7 @@ If you're using ES6+, you can include the original sources by importing the modu
 ```
 import zine from 'zine/es6';
 ```
-...or importing the methods it exports individually, e.g.
+...or importing the functions it exports individually, e.g.
 ```
 import {connector, propConnector, createSubscriber, publish, publishable, subscribe, unsubscribe} from 'zine/es6';
 ```
