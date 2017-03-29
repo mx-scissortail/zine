@@ -22,5 +22,3 @@ config.ignore = function(filename) {
 }
 
 register(config);
-
-global.assert = require('assert');
