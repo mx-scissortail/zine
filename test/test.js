@@ -4,7 +4,7 @@ import {mount} from 'enzyme';
 import sinon from 'sinon';
 import createMockDOM from 'jsdom-global';
 
-import zine from '../es6';
+import zine from '../index.js';
 
 createMockDOM();
 
