@@ -28,7 +28,7 @@
   "scripts": {
     "build": "babel es6/index.js --out-file index.js",
     "prepare": "npm run build",
-    "test": "mocha --require test/setup.js --compilers js:babel-register test/test.js"
+    "test": "npm run build && mocha --require test/setup.js --compilers js:babel-register test/test.js"
   },
   "repository": {
     "type": "git",
