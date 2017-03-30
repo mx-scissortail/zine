@@ -1,6 +1,6 @@
 {
   "name": "zine",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "A simple pub/sub system and higher order React component, for building reactive interfaces",
   "main": "index.js",
   "files": [

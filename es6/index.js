@@ -59,20 +59,20 @@ export function publish (subject, value) {
 
 const sharedMethods = {
   componentWillMount: function () {
-    this._zine.canUpdate = true;
+    this.canUpdate = true;
     if (publishable(this.subscription)) {
       subscribe(this.subscription, this.update);
     } // TODO: add a warning when passing unpublishable value to subscription prop?
   },
 
   componentWillUnmount: function () {
-    this._zine.canUpdate = false; // prevent updates from triggering re-renders after component decides to unmount
+    this.canUpdate = false; // prevent updates from triggering re-renders after component decides to unmount
     unsubscribe(this.subscription, this.update);
   },
 
   update: function (value) {
     // value is almost always undefined here, but can be because of how zine.publish uses it as an optional second argument
-    if (this._zine.canUpdate) {
+    if (this.canUpdate) {
       this.setState({props: this._zine.transform(this.subscription, value)});
     }
   },
