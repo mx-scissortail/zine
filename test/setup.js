@@ -1,10 +1,16 @@
 import fs from 'fs';
 import path from 'path';
-import register from 'babel-core/register';
+import register from 'babel-register';
+
+import {configure} from 'enzyme';
+import Adapter from 'enzyme-adapter-react-16';
+
+configure({adapter: new Adapter()});
 
 // Ignore all node_modules except these
 const modulesToCompile = [
-  'zine'
+  'zine',
+  'zine/react'
 ].map((moduleName) => new RegExp(`/node_modules/${moduleName}`));
 
 const rcPath = path.join(__dirname, '..', '.babelrc');

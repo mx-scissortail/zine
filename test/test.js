@@ -1,21 +1,21 @@
+// TODO: add propInjector tests
 import React from 'react';
 import {assert} from 'chai';
 import {mount} from 'enzyme';
 import sinon from 'sinon';
 import createMockDOM from 'jsdom-global';
 
-import zine from '../index.js';
+import * as zine from '../index.js';
+import {connector, propInjector, propConnector, createSubscriber, directFunctionalRenderer, directConnector} from '../react/index.js';
 
 createMockDOM();
 
-const ValueDiv = ({value}) => <div className={`test ${value}`} />;
-const WrappedValueDiv = ({store: {value}}) => <div className={`test ${value}`} />;
-const WrappedMultiValueDiv = ({storeA: {value}, storeB: {secondValue}}) => <div className={`test ${value} ${secondValue}`} />;
+const render = (value, secondValue) => secondValue ? <div>{value} {secondValue}</div> : <div>{value}</div>;
+const ValueDiv = ({value, secondValue}) => render(value, secondValue);
+const WrappedValueDiv = ({store: {value}}) => render(value);
+const WrappedMultiValueDiv = ({storeA: {value}, storeB: {secondValue}}) => render(value, secondValue);
 
 const mountTest = (component, props) => mount(React.createElement(component, props));
-const testClass = (wrapper, cn) => assert.isTrue(wrapper.find('.test').hasClass(cn));
-const testClassAbsent = (wrapper, cn) => assert.isFalse(wrapper.find('.test').hasClass(cn));
-
 
 // publishable
 describe('publishable', function () {
@@ -60,146 +60,182 @@ describe('subscribe/publish/unsubscribe', function () {
 // connector
 describe('connector', function () {
   it('rejects inappropriate subscription specs', function () {
-    [undefined, null, true, 1, Symbol()].forEach((type) => assert.throws(() => zine.connector(type), TypeError, '', `[offending type: ${typeof type}]`));
+    [undefined, null, true, 1, Symbol()].forEach((type) => assert.throws(() => connector(type), TypeError, '', `[offending type: ${typeof type}]`));
   });
 
   it('rejects inappropriate transform functions', function () {
-    [{}, null, true, 1, Symbol()].forEach((type) => assert.throws(() => zine.connector({}, type), TypeError, '', `[offending type: ${typeof type}]`));
+    [{}, null, true, 1, Symbol()].forEach((type) => assert.throws(() => connector({}, type), TypeError, '', `[offending type: ${typeof type}]`));
   });
+
+  it('renders and passes props', function () {
+    const store = {value: 'untouched'};
+    const wrapper = mountTest(connector(store)(ValueDiv), {secondValue: 'present'});
+    assert.equal(wrapper.html(), '<div>untouched present</div>');
+  });
+
+  it('renders and passes props (with directFunctionalRenderer)', function () {
+    const store = {value: 'untouched'};
+    const wrapper = mountTest(connector(store)(
+      (state, props) => render(state.value, props.secondValue),
+      directFunctionalRenderer
+    ), {secondValue: 'present'});
+    assert.equal(wrapper.html(), '<div>untouched present</div>');
+  });
+
 
   describe('static subscription (object/function)', function () {
     it('re-renders on update', function () {
       const store = {value: 'untouched'};
-      const wrapper = mountTest(zine.connector(store)(ValueDiv));
-      testClass(wrapper, 'untouched');
+      const wrapper = mountTest(connector(store)(ValueDiv));
+      assert.equal(wrapper.html(), '<div>untouched</div>');
       store.value = 'touched';
       zine.publish(store);
-      testClass(wrapper, 'touched');
+      assert.equal(wrapper.html(), '<div>touched</div>');
     });
 
     it('uses transform function', function () {
       const store = {value: 'untouched'};
       const transform = (store) => (store.value == 'touched') ? {value: 'transformed'} : store;
-      const wrapper = mountTest(zine.connector(store, transform)(ValueDiv));
-      testClass(wrapper, 'untouched');
+      const wrapper = mountTest(connector(store, transform)(ValueDiv));
+      assert.equal(wrapper.html(), '<div>untouched</div>');
       store.value = 'touched';
       zine.publish(store);
-      testClass(wrapper, 'transformed');
+      assert.equal(wrapper.html(), '<div>transformed</div>');
     });
   });
 
   describe('dynamic subscription (via prop)', function () {
     it('re-renders on update', function () {
       const store = {value: 'untouched'};
-      const wrapper = mountTest(zine.connector('store')(ValueDiv), {store});
-      testClass(wrapper, 'untouched');
+      const wrapper = mountTest(connector('store')(ValueDiv), {store});
+      assert.equal(wrapper.html(), '<div>untouched</div>');
       store.value = 'touched';
       zine.publish(store);
-      testClass(wrapper, 'touched');
+      assert.equal(wrapper.html(), '<div>touched</div>');
     });
 
     it('uses transform function', function () {
       const store = {value: 'untouched'};
       const transform = (sub) => (sub.value == 'touched') ? {value: 'transformed'} : sub;
-      const wrapper = mountTest(zine.connector('store', transform)(ValueDiv), {store});
-      testClass(wrapper, 'untouched');
+      const wrapper = mountTest(connector('store', transform)(ValueDiv), {store});
+      assert.equal(wrapper.html(), '<div>untouched</div>');
       store.value = 'touched';
       zine.publish(store);
-      testClass(wrapper, 'transformed');
+      assert.equal(wrapper.html(), '<div>transformed</div>');
     });
 
     it('switches subscription on prop change', function () {
       const storeA = {value: 'untouched'};
       const storeB = {value: 'untouched'};
-      const wrapper = mountTest(zine.connector('store')(ValueDiv), {store: storeA});
-      testClass(wrapper, 'untouched');
+      const wrapper = mountTest(connector('store')(ValueDiv), {store: storeA});
+      assert.equal(wrapper.html(), '<div>untouched</div>');
       storeA.value = 'touched';
       zine.publish(storeA);
-      testClass(wrapper, 'touched');
+      assert.equal(wrapper.html(), '<div>touched</div>');
       wrapper.setProps({store: storeB});
-      testClass(wrapper, 'untouched');
+      assert.equal(wrapper.html(), '<div>untouched</div>');
       storeB.value = 'touched';
       zine.publish(storeB);
-      testClass(wrapper, 'touched');
+      assert.equal(wrapper.html(), '<div>touched</div>');
       storeA.value = 'retouched';
       zine.publish(storeA);
-      testClassAbsent(wrapper, 'retouched');
+      assert.equal(wrapper.html(), '<div>touched</div>'); // Doesn't change to "retouched"
     });
   });
 
-  it('unsubscribes before unmounting', function () {
-    const store = {value: 'unused', renderChild: true};
-    const Wrapped = zine.connector(store)(ValueDiv);
-    const ParentSubscriber = ({renderChild}) => <div>{renderChild && <Wrapped />}</div>;
+  describe('react lifecycle tests', function () {
+    it('unsubscribes before unmounting', function () {
+      const store = {value: 'unused', renderChild: true};
+      const Wrapped = connector(store)(ValueDiv);
+      const ParentSubscriber = ({renderChild}) => <div>{renderChild && <Wrapped />}</div>;
 
-    const wrapper = mountTest(zine.connector(store)(ParentSubscriber));
-    sinon.spy(console, 'error');
-    store.renderChild = false;
-    zine.publish(store);
-    assert.isFalse(console.error.called);
-  });
+      const wrapper = mountTest(connector(store)(ParentSubscriber));
+      sinon.spy(console, 'error');
+      store.renderChild = false;
+      zine.publish(store);
+      assert.isFalse(console.error.called);
+    });
 
-  it('renders as child without triggering parent re-render', function () {
-    const Wrapped = zine.connector('store')(ValueDiv);
-    var renderCount = 0;
-    const Parent = ({store}) => <div className={'parent ' + (renderCount++ > 0 ? 'rerendered' : '')}><Wrapped store={store} /></div>;
+    it('renders as child without triggering parent re-render', function () {
+      const Wrapped = connector('store')(ValueDiv);
+      var renderCount = 0;
+      const Parent = ({store}) => <div className={'parent ' + renderCount++}><Wrapped store={store} /></div>;
 
-    const store = {value: 'untouched'};
-    const wrapper = mountTest(Parent, {store});
-    testClass(wrapper, 'untouched');
-    assert.isFalse(wrapper.find('.parent').hasClass('rerendered'));
-    store.value = 'touched';
-    zine.publish(store);
-    testClass(wrapper, 'touched');
-    assert.isFalse(wrapper.find('.parent').hasClass('rerendered'));
-  });
+      const store = {value: 'untouched'};
+      const wrapper = mountTest(Parent, {store});
+      assert.equal(wrapper.html(), '<div class="parent 0"><div>untouched</div></div>');
+      store.value = 'touched';
+      zine.publish(store);
+      assert.equal(wrapper.html(), '<div class="parent 0"><div>touched</div></div>');
+    });
 
-  it('creates independently reusable components', function () {
-    const Wrapped = zine.connector('store')(({id, value}) => <div className={`${id} ${value}`} />);
-    const storeA = {value: 'untouched'};
-    const storeB = {value: 'untouched'};
+    it('creates independently reusable components', function () {
+      const Wrapped = connector('store')(({id, value}) => <div className={`${id} ${value}`} />);
+      const storeA = {value: 'untouched'};
+      const storeB = {value: 'untouched'};
 
-    const wrapper = mountTest(() => <div><Wrapped id='A' store={storeA} /><Wrapped id='B' store={storeB} /></div>);
-    assert.isTrue(wrapper.find('.A').hasClass('untouched'));
-    assert.isTrue(wrapper.find('.B').hasClass('untouched'));
-    storeA.value = 'touched';
-    zine.publish(storeA);
-    assert.isTrue(wrapper.find('.A').hasClass('touched'));
-    assert.isFalse(wrapper.find('.B').hasClass('touched'));
-    storeB.value = 'alsoTouched';
-    zine.publish(storeB);
-    assert.isTrue(wrapper.find('.B').hasClass('alsoTouched'));
-    assert.isFalse(wrapper.find('.A').hasClass('alsoTouched'));
+      const wrapper = mountTest(() => <div><Wrapped id='A' store={storeA} /><Wrapped id='B' store={storeB} /></div>);
+      assert.equal(wrapper.html(), '<div><div class="A untouched"></div><div class="B untouched"></div></div>');
+      storeA.value = 'touched';
+      zine.publish(storeA);
+      assert.equal(wrapper.html(), '<div><div class="A touched"></div><div class="B untouched"></div></div>');
+      storeB.value = 'alsoTouched';
+      zine.publish(storeB);
+      assert.equal(wrapper.html(), '<div><div class="A touched"></div><div class="B alsoTouched"></div></div>');
+    });
   });
 });
 
-// propConnector
-describe('propConnector', function () {
-  it('rejects inappropriate subscription specs', function () {
-    [{}, () => 0, undefined, null, true, 1, Symbol()].forEach((type) => assert.throws(() => zine.propConnector(type), Error, '', `[offending type: ${typeof type}]`));
+// directConnector
+describe('directConnector', function () {
+  it('uses directFunctionalRenderer', function () {
+    const store = {value: 'untouched'};
+    const wrapper = mountTest(directConnector(store)(
+      (state, props) => render(state.value, props.secondValue)
+    ), {secondValue: 'present'});
+    assert.equal(wrapper.html(), '<div>untouched present</div>');
+  });
+});
+
+// propInjector
+describe('propInjector', function () {
+  it('rejects invalid prop names', function () {
+    [{}, () => 0, undefined, null, true, 1, Symbol()].forEach((type) => assert.throws(() => propInjector({}, type), Error, '', `[offending type: ${typeof type}]`));
   });
 
   it('rejects inappropriate transform functions', function () {
-    [{}, null, true, 1, Symbol()].forEach((type) => assert.throws(() => zine.propConnector({}, type), Error, '', `[offending type: ${typeof type}]`));
+    [{}, null, true, 1, Symbol()].forEach((type) => assert.throws(() => propInjector({}, '', type), Error, '', `[offending type: ${typeof type}]`));
   });
 
   it('wraps default transform function', function () {
     const store = {value: 'untouched'};
-    const wrapper = mountTest(zine.propConnector('store')(WrappedValueDiv), {store});
-    testClass(wrapper, 'untouched');
+    const wrapper = mountTest(propInjector('store', 'store')(WrappedValueDiv), {store});
+    assert.equal(wrapper.html(), '<div>untouched</div>');
     store.value = 'touched';
     zine.publish(store);
-    testClass(wrapper, 'touched');
+    assert.equal(wrapper.html(), '<div>touched</div>');
   });
 
   it('wraps custom transform function', function () {
     const store = {value: 'untouched'};
     const transform = (store) => (store.value == 'touched') ? {value: 'transformed'} : store;
-    const wrapper = mountTest(zine.propConnector('store', transform)(WrappedValueDiv), {store});
-    testClass(wrapper, 'untouched');
+    const wrapper = mountTest(propInjector('store', 'store', transform)(WrappedValueDiv), {store});
+    assert.equal(wrapper.html(), '<div>untouched</div>');
     store.value = 'touched';
     zine.publish(store);
-    testClass(wrapper, 'transformed');
+    assert.equal(wrapper.html(), '<div>transformed</div>');
+  });
+});
+
+// propConnector
+describe('propConnector', function () {
+  it('works', function () {
+    const store = {value: 'untouched'};
+    const wrapper = mountTest(propConnector('store')(WrappedValueDiv), {store});
+    assert.equal(wrapper.html(), '<div>untouched</div>');
+    store.value = 'touched';
+    zine.publish(store);
+    assert.equal(wrapper.html(), '<div>touched</div>');
   });
 });
 
@@ -207,26 +243,23 @@ describe('propConnector', function () {
 describe('createSubscriber', function () {
   it('accepts a single prop name', function () {
     const store = {value: 'untouched'};
-    const wrapper = mountTest(zine.createSubscriber('store', WrappedValueDiv), {store});
-    testClass(wrapper, 'untouched');
+    const wrapper = mountTest(createSubscriber('store', WrappedValueDiv), {store});
+    assert.equal(wrapper.html(), '<div>untouched</div>');
     store.value = 'touched';
     zine.publish(store);
-    testClass(wrapper, 'touched');
+    assert.equal(wrapper.html(), '<div>touched</div>');
   });
 
   it('accepts multiple prop names', function () {
     const storeA = {value: 'untouched'};
     const storeB = {secondValue: 'alsoUntouched'};
-    const wrapper = mountTest(zine.createSubscriber(['storeA', 'storeB'], WrappedMultiValueDiv), {storeA, storeB});
-    testClass(wrapper, 'untouched');
-    testClass(wrapper, 'alsoUntouched');
+    const wrapper = mountTest(createSubscriber(['storeA', 'storeB'], WrappedMultiValueDiv), {storeA, storeB});
+    assert.equal(wrapper.html(), '<div>untouched alsoUntouched</div>');
     storeA.value = 'touched';
     zine.publish(storeA);
-    testClass(wrapper, 'touched');
-    testClass(wrapper, 'alsoUntouched');
+    assert.equal(wrapper.html(), '<div>touched alsoUntouched</div>');
     storeB.secondValue = 'alsoTouched';
     zine.publish(storeB);
-    testClass(wrapper, 'touched');
-    testClass(wrapper, 'alsoTouched');
+    assert.equal(wrapper.html(), '<div>touched alsoTouched</div>');
   });
 });
