@@ -6,6 +6,7 @@ Usage: `import * as zine from 'zine';` (or import functions individually)
 
 The base `zine` module contains the publisher/subscriber core functionality and exports five functions: `issue`, `publish`, `publishable`, `subscribe` and `unsubscribe`. The `zine` module does not have any React dependencies and can be used independently.
 
+---
 ### `issue(subject[, values])`
 
 A common use case for zine's publisher is to assign some values to an object and then publish it. `issue` provides syntax sugar for this, and is equivalent to:
@@ -63,7 +64,8 @@ Usage: `import {Connect, connector} from 'zine/Connect';`
 
 The `zine/Connect` module contains all the React-related functionality provided by zine. It exports the React wrapper component `Connect` and a syntax sugar function `connector`, as well as all of the above functions (for convenience).
 
-## `Connect`
+---
+### `Connect`
 
 `Connect` is a react wrapper component. It takes three props: `source` (any publishable subject, i.e. an object or function), `render` (a function of two arguments that determines what `Connect` renders) and `passProps` (an optional object of additional props to pass along at render time). The `source` argument is passed along as the first argument to the `render` prop whenever `Connect` renders. So for instance:
 
@@ -77,7 +79,8 @@ Will render `<SomeOtherComponent foo='bar' value={StoreInstance.value} />`. The 
 
 If `Connect` unmounts or is re-rendered from above with a new `source` prop, it will automatically cancel its former subscription (and create a new one if necessary).
 
-## `connector(source, render)`
+---
+### `connector(source, render)`
 
 `connector` provides syntax sugar for a common use of `Connect`, and is implemented as follows:
 ```
