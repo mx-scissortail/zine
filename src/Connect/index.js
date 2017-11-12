@@ -46,7 +46,7 @@ Connect.defaultProps = {
   passProps: {},
   render: () => null,
   source: undefined
-}
+};
 
 export function connector (spec, render) {
   return (props) => <Connect source={spec} render={render} passProps={props} />;
