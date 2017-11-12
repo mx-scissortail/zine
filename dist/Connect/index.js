@@ -3,17 +3,47 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.Connect = undefined;
+exports.Connect = exports.unsubscribe = exports.subscribe = exports.publishable = exports.publish = exports.issue = undefined;
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
+var _index = require('../index.js');
+
+Object.defineProperty(exports, 'issue', {
+  enumerable: true,
+  get: function get() {
+    return _index.issue;
+  }
+});
+Object.defineProperty(exports, 'publish', {
+  enumerable: true,
+  get: function get() {
+    return _index.publish;
+  }
+});
+Object.defineProperty(exports, 'publishable', {
+  enumerable: true,
+  get: function get() {
+    return _index.publishable;
+  }
+});
+Object.defineProperty(exports, 'subscribe', {
+  enumerable: true,
+  get: function get() {
+    return _index.subscribe;
+  }
+});
+Object.defineProperty(exports, 'unsubscribe', {
+  enumerable: true,
+  get: function get() {
+    return _index.unsubscribe;
+  }
+});
 exports.connector = connector;
 
 var _react = require('react');
 
 var _react2 = _interopRequireDefault(_react);
-
-var _index = require('../index.js');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -85,8 +115,8 @@ Connect.defaultProps = {
   source: undefined
 };
 
-function connector(spec, render) {
+function connector(source, render) {
   return function (props) {
-    return _react2.default.createElement(Connect, { source: spec, render: render, passProps: props });
+    return _react2.default.createElement(Connect, { source: source, render: render, passProps: props });
   };
 }

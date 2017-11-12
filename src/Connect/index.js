@@ -1,5 +1,6 @@
 import React from 'react';
 import {publishable, subscribe, unsubscribe} from '../index.js';
+export {issue, publish, publishable, subscribe, unsubscribe} from '../index.js';
 
 export class Connect extends React.Component {
   constructor(props) {
@@ -48,6 +49,6 @@ Connect.defaultProps = {
   source: undefined
 };
 
-export function connector (spec, render) {
-  return (props) => <Connect source={spec} render={render} passProps={props} />;
+export function connector (source, render) {
+  return (props) => <Connect source={source} render={render} passProps={props} />;
 }
