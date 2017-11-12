@@ -1,18 +1,17 @@
 const allSubscriptions = new WeakMap();
 
 export function publishable (subject) {
-  if (subject === null) return false;
-  switch (typeof subject) {
-    case 'object':
-    case 'function':
+  if (subject !== null) {
+    let subjectType = typeof subject;
+    if (subjectType === 'object' || subjectType === 'function') {
       return true;
-    default:
-      return false;
+    }
   }
+  return false;
 };
 
 export function subscribe (subject, subscription) {
-  var subscriptions = allSubscriptions.get(subject);
+  let subscriptions = allSubscriptions.get(subject);
 
   if (subscriptions) {
     subscriptions.push(subscription);
@@ -28,20 +27,28 @@ export function subscribe (subject, subscription) {
 };
 
 export function unsubscribe (subject, subscriptionToCancel) {
-  var subscriptions = allSubscriptions.get(subject);
+  let subscriptions = allSubscriptions.get(subject);
 
   if (subscriptions) {
-    // Consider computation/memory tradeoff of removing empty subscription lists here
-    allSubscriptions.set(subject, subscriptions.filter((subscription) => subscription !== subscriptionToCancel));
+    // Consider computation/memory tradeoff of potentially removing empty subscription lists here
+    let filteredSubs = [];
+    let numSubscribers = subscriptions.length;
+    for (let i = 0; i < numSubscribers; i++) {
+      let subscription = subscriptions[i];
+      if (subscription !== subscriptionToCancel) {
+        filteredSubs.push(subscription);
+      }
+    }
+    allSubscriptions.set(subject, filteredSubs);
   }
 };
 
 export function publish (subject, value) {
-  var subscriptions = allSubscriptions.get(subject);
+  let subscriptions = allSubscriptions.get(subject);
 
   if (subscriptions) {
-    var numSubscribers = subscriptions.length;
-    for (var i = 0; i < numSubscribers; i++) {
+    let numSubscribers = subscriptions.length;
+    for (let i = 0; i < numSubscribers; i++) {
       subscriptions[i](value);
     }
   }

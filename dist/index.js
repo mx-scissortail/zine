@@ -14,14 +14,13 @@ exports.issue = issue;
 var allSubscriptions = new WeakMap();
 
 function publishable(subject) {
-  if (subject === null) return false;
-  switch (typeof subject === 'undefined' ? 'undefined' : _typeof(subject)) {
-    case 'object':
-    case 'function':
+  if (subject !== null) {
+    var subjectType = typeof subject === 'undefined' ? 'undefined' : _typeof(subject);
+    if (subjectType === 'object' || subjectType === 'function') {
       return true;
-    default:
-      return false;
+    }
   }
+  return false;
 };
 
 function subscribe(subject, subscription) {
@@ -44,10 +43,16 @@ function unsubscribe(subject, subscriptionToCancel) {
   var subscriptions = allSubscriptions.get(subject);
 
   if (subscriptions) {
-    // Consider computation/memory tradeoff of removing empty subscription lists here
-    allSubscriptions.set(subject, subscriptions.filter(function (subscription) {
-      return subscription !== subscriptionToCancel;
-    }));
+    // Consider computation/memory tradeoff of potentially removing empty subscription lists here
+    var filteredSubs = [];
+    var numSubscribers = subscriptions.length;
+    for (var i = 0; i < numSubscribers; i++) {
+      var subscription = subscriptions[i];
+      if (subscription !== subscriptionToCancel) {
+        filteredSubs.push(subscription);
+      }
+    }
+    allSubscriptions.set(subject, filteredSubs);
   }
 };
 
