@@ -5,8 +5,8 @@ import {mount} from 'enzyme';
 import sinon from 'sinon';
 import createMockDOM from 'jsdom-global';
 
-import * as zine from '../dist/index.js';
-import {Connect, connector} from '../dist/Connect/index.js';
+import * as zine from '../index.js';
+import {Connect, connector} from '../Connect/index.js';
 
 createMockDOM();
 

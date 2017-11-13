@@ -2,10 +2,10 @@
   "name": "zine",
   "version": "3.0.0",
   "description": "A simple state management system for building reactive user interfaces",
-  "main": "dist/index.js",
+  "main": "index.js",
   "files": [
-    "dist/index.js",
-    "dist/Connect/index.js",
+    "index.js",
+    "Connect/index.js",
     "src/index.js",
     "src/Connect/index.js"
   ],
@@ -30,7 +30,7 @@
     "react": ">=0.14.0"
   },
   "scripts": {
-    "build": "babel src/index.js --out-file dist/index.js && babel src/Connect/index.js --out-file dist/Connect/index.js",
+    "build": "babel src/index.js --out-file index.js && babel src/Connect/index.js --out-file Connect/index.js",
     "prepare": "npm run build",
     "test": "npm run build && cross-env NODE_ENV=test mocha --require test/setup.js --compilers js:babel-register test/test.js"
   },
