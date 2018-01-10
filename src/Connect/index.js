@@ -41,7 +41,7 @@ export class Connect extends React.Component {
   render () {
     return this.props.render(this.props.source, this.props.passProps);
   }
-}
+};
 
 Connect.defaultProps = {
   passProps: {},
@@ -51,4 +51,4 @@ Connect.defaultProps = {
 
 export function connector (source, render) {
   return (props) => <Connect source={source} render={render} passProps={props} />;
-}
+};

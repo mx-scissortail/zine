@@ -107,6 +107,8 @@ var Connect = exports.Connect = function (_React$Component) {
   return Connect;
 }(_react2.default.Component);
 
+;
+
 Connect.defaultProps = {
   passProps: {},
   render: function render() {
@@ -119,4 +121,4 @@ function connector(source, render) {
   return function (props) {
     return _react2.default.createElement(Connect, { source: source, render: render, passProps: props });
   };
-}
+};
