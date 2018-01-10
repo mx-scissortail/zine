@@ -9,6 +9,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 exports.publishable = publishable;
 exports.subscribe = subscribe;
 exports.unsubscribe = unsubscribe;
+exports.unsubscribeAll = unsubscribeAll;
 exports.publish = publish;
 exports.issue = issue;
 var allSubscriptions = new WeakMap();
@@ -56,13 +57,17 @@ function unsubscribe(subject, subscriptionToCancel) {
   }
 };
 
+function unsubscribeAll(subject) {
+  allSubscriptions.delete(subject);
+};
+
 function publish(subject, value) {
   var subscriptions = allSubscriptions.get(subject);
 
   if (subscriptions) {
     var numSubscribers = subscriptions.length;
     for (var i = 0; i < numSubscribers; i++) {
-      subscriptions[i](value);
+      subscriptions[i](subject, value);
     }
   }
 
@@ -72,4 +77,4 @@ function publish(subject, value) {
 function issue(target, source) {
   Object.assign(target, source);
   publish(target, source);
-}
+};

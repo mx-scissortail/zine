@@ -34,12 +34,12 @@ describe('zine (pub/sub core)', () => {
       assert.isTrue(callback.calledOnce);
     });
 
-    it('publishes optional value argument on update', () => {
+    it('publishes subject and optional value argument on update', () => {
       const callback = sinon.spy();
       const sub = {};
       zine.subscribe(sub, callback);
       zine.publish(sub, 1);
-      assert.isTrue(callback.calledWith(1));
+      assert.isTrue(callback.calledWith(sub, 1));
     });
 
     it('stops publishing on unsubscribe', () => {

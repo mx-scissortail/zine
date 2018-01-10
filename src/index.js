@@ -43,13 +43,17 @@ export function unsubscribe (subject, subscriptionToCancel) {
   }
 };
 
+export function unsubscribeAll (subject) {
+  allSubscriptions.delete(subject);
+};
+
 export function publish (subject, value) {
   let subscriptions = allSubscriptions.get(subject);
 
   if (subscriptions) {
     let numSubscribers = subscriptions.length;
     for (let i = 0; i < numSubscribers; i++) {
-      subscriptions[i](value);
+      subscriptions[i](subject, value);
     }
   }
 
@@ -59,4 +63,4 @@ export function publish (subject, value) {
 export function issue (target, source) {
   Object.assign(target, source);
   publish(target, source);
-}
+};
