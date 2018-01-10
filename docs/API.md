@@ -4,7 +4,7 @@
 
 Usage: `import * as zine from 'zine';` (or import functions individually)
 
-The base `zine` module contains the publisher/subscriber core functionality and exports five functions: `issue`, `publish`, `publishable`, `subscribe` and `unsubscribe`. The `zine` module does not have any React dependencies and can be used independently.
+The base `zine` module contains the publisher/subscriber core functionality and exports six functions: `issue`, `publish`, `publishable`, `subscribe`, `unsubscribe` and `unsubscribeAll`. The `zine` module does not have any React dependencies and can be used independently.
 
 ---
 ### `issue(subject[, values])`
@@ -19,11 +19,11 @@ Calling `issue` without a second argument is equivalent to just calling `publish
 ---
 ### `publish(subject[, value])`
 
-Publishes events associated with a given `subject`. If you've previously called `subscribe(subject, subscription)`, `publish(subject)` will trigger `subscription()`, and `publish(subject, value)` will trigger `subscription(value)`. Callbacks are triggered in the order of subscription.
+Publishes events associated with a given `subject`. If you've previously called `subscribe(subject, subscription)`, `publish(subject)` will trigger `subscription(subject)`, and `publish(subject, value)` will trigger `subscription(subject, value)`. Callbacks are triggered in the order of subscription.
 
 The typical use here is to have some object that contains data, e.g.
 ```
-var foo = {
+let foo = {
   bar: true
 };
 ```
@@ -56,6 +56,11 @@ Internally, zine uses a `WeakMap` to track subscriptions, so it won't leak refer
 ### `unsubscribe(subject, subscription)`
 
 Removes all instances of `subscription` from the list of callbacks associated with `subject`. See the documentation for `publish` for a small caveat about the result of calling `unsubscribe` during a call to `publish`.
+
+---
+### `unsubscribeAll(subject)`
+
+Removes all subscriptions associated with `subject`.
 
 ---
 ## zine/Connect (React integration module)
