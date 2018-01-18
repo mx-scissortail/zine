@@ -1,14 +1,10 @@
 {
   "name": "zine",
-  "version": "4.0.0",
-  "description": "A simple state management system for building reactive user interfaces",
+  "version": "5.0.0",
+  "description": "A simple publisher/subscriber system for building reactive applications",
   "main": "index.js",
-  "module": "src/index.js",
   "files": [
-    "index.js",
-    "Connect/index.js",
-    "src/index.js",
-    "src/Connect/index.js"
+    "index.js"
   ],
   "devDependencies": {
     "babel-cli": "^6.26.0",
@@ -17,21 +13,11 @@
     "babel-register": "^6.26.0",
     "chai": "^4.1.2",
     "cross-env": "^5.0.5",
-    "enzyme": "^3.0.0",
-    "enzyme-adapter-react-16": "^1.0.0",
-    "jsdom": "11.2.0",
-    "jsdom-global": "3.0.2",
     "mocha": "^3.5.3",
-    "react": "^16.0.0",
-    "react-dom": "^16.0.0",
-    "react-test-renderer": "^16.0.0",
     "sinon": "^4.0.0"
   },
-  "peerDependencies": {
-    "react": ">=0.14.0"
-  },
   "scripts": {
-    "build": "babel src/index.js --out-file index.js && babel src/Connect/index.js --out-file Connect/index.js",
+    "build": "babel src/index.js --out-file index.js",
     "prepare": "npm run build",
     "test": "npm run build && cross-env NODE_ENV=test mocha --require test/setup.js --compilers js:babel-register test/test.js"
   },

@@ -1,10 +1,6 @@
 # API Documentation
 
-## `zine` (publisher/subscriber core module)
-
 Usage: `import * as zine from 'zine';` (or import functions individually)
-
-The base `zine` module contains the publisher/subscriber core functionality and exports six functions: `issue`, `publish`, `publishable`, `subscribe`, `unsubscribe` and `unsubscribeAll`. The `zine` module does not have any React dependencies and can be used independently.
 
 ---
 ### `issue(subject[, values])`
@@ -61,43 +57,3 @@ Removes all instances of `subscription` from the list of callbacks associated wi
 ### `unsubscribeAll(subject)`
 
 Removes all subscriptions associated with `subject`.
-
----
-## zine/Connect (React integration module)
-
-Usage: `import {Connect, connector} from 'zine/Connect';`
-
-The `zine/Connect` module contains all the React-related functionality provided by zine. It exports the React wrapper component `Connect` and a syntax sugar function `connector`, as well as all of the above functions (for convenience).
-
----
-### `Connect`
-
-`Connect` is a react wrapper component. It takes three props: `source` (any publishable subject, i.e. an object or function), `render` (a function of two arguments that determines what `Connect` renders) and `passProps` (an optional object of additional props to pass along at render time). The `source` argument is passed along as the first argument to the `render` prop whenever `Connect` renders. So for instance:
-
-```
-<Connect source={StoreInstance} passProps={{foo: 'bar'}} render={(store, props) => (
-  <SomeOtherComponent {...props} value={store.value} />
-  )} />
-```
-
-Will render `<SomeOtherComponent foo='bar' value={StoreInstance.value} />`. The useful feature of `Connect` is that it automatically manages a subscription to whatever is provided to its `source` prop and re-renders whenever that is published. So the above component will re-render (in place, without affecting the rest of the component hierarchy) whenever `StoreInstance` is published from anywhere in the application, which makes it easy to inject state updates anywhere in the component hierarchy.
-
-If `Connect` unmounts or is re-rendered from above with a new `source` prop, it will automatically cancel its former subscription (and create a new one if necessary).
-
----
-### `connector(source, render)`
-
-`connector` provides syntax sugar for a common use of `Connect`, and is implemented as follows:
-```
-export function connector (source, render) {
-  return (props) => <Connect source={source} render={render} passProps={props} />;
-}
-```
-This enables an extremely concise way to define pure functional components that subcribe to static sources, e.g.
-```
-const InputStore = {value: ''};
-const Input = connector(InputStore,
-  (store, props) => <input type="text" value={store.value} onInput={(event) => issue(store, {value: event.target.value})} />
-);
-```
-...will define a managed `input` component that tracks and updates the `value` field from the object `InputStore`.
